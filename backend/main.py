@@ -53,12 +53,12 @@ class AnalyzeResponse(BaseModel):
     repo_url: str
     total_files: int
     language_info: dict
-    frameworks: dict
+    frameworks: list
     complexity: dict
     architecture: dict
     readme_score: dict
-    commit_activity: dict   
-
+    commit_activity: dict
+    
 
 @app.get("/")
 def root():

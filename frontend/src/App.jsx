@@ -8,7 +8,6 @@ const SECTIONS = {
   architecture: { color: "#a78bfa", bg: "rgba(167,139,250,0.1)", label: "Architecture" },
   complexity: { color: "#4d9fff", bg: "rgba(77,159,255,0.1)", label: "Complexity" },
   readme: { color: "#4ade80", bg: "rgba(74,222,128,0.1)", label: "README" },
-  security: { color: "#ff6b6b", bg: "rgba(255,107,107,0.1)", label: "Security" },
   commits: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)", label: "Commits" },
 };
 
@@ -276,13 +275,6 @@ export default function App() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Security */}
-            <SectionHeading tone="security">Security</SectionHeading>
-            <div style={{ display: "flex", gap: 12 }}>
-              <StatCard tone="security" label="Risk level" value={data.security?.risk_level ?? "—"} />
-              <StatCard tone="security" label="Issues found" value={data.security?.total_issues ?? 0} />
             </div>
 
             {/* Commits */}

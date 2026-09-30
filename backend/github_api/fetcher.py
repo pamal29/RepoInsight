@@ -3,6 +3,9 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from collections import Counter
+from github import Github, GithubException
+from datetime import datetime, timedelta, timezone
+from collections import Counter
 
 load_dotenv()
 
@@ -40,36 +43,58 @@ def get_repo_contents(repo_url: str):
     return all_files
 
 
-def get_commit_activity(repo_url: str, days: int = 90):
-    """
-    Returns recent commit frequency and top contributors for a repo.
-    """
+def get_commit_activity(repo_url: str, max_commits: int = 500):
+ 
     repo_name = repo_url.removeprefix("https://github.com/").rstrip("/")
-    repo = g.get_repo(repo_name)
-
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    empty = {
+        "total_commits": 0,
+        "last_30_days": 0,
+        "longest_streak_days": 0,
+        "contributors": {},
+    }
 
     try:
-        commits = repo.get_commits(since=since)
-    except Exception as e:
+        repo = g.get_repo(repo_name)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+
+        total = 0
+        last_30 = 0
+        contributors = Counter()
+        commit_days = set()
+
+        for commit in repo.get_commits()[:max_commits]:
+            total += 1
+
+            date = commit.commit.author.date if commit.commit.author else None
+            if date:
+                if date.tzinfo is None:
+                    date = date.replace(tzinfo=timezone.utc)
+                commit_days.add(date.date())
+                if date >= cutoff:
+                    last_30 += 1
+
+            author = (
+                commit.author.login
+                if commit.author
+                else (commit.commit.author.name if commit.commit.author else "unknown")
+            )
+            contributors[author] += 1
+
+        # longest run of consecutive days with at least one commit
+        longest = current = 0
+        prev = None
+        for day in sorted(commit_days):
+            current = current + 1 if prev and (day - prev).days == 1 else 1
+            longest = max(longest, current)
+            prev = day
+
         return {
-            "total_commits": 0,
-            "contributors": {},
-            "error": str(e),
+            "total_commits": total,
+            "last_30_days": last_30,
+            "longest_streak_days": longest,
+            "contributors": dict(contributors.most_common(10)),
+            "truncated": total >= max_commits,
         }
 
-    contributor_counts = Counter()
-    total = 0
-
-    for commit in commits:
-        total += 1
-        author = commit.author.login if commit.author else (
-            commit.commit.author.name if commit.commit.author else "unknown"
-        )
-        contributor_counts[author] += 1
-
-    return {
-        "total_commits": total,
-        "contributors": dict(contributor_counts.most_common(10)),
-        "period_days": days,
-    }
+    except GithubException as e:
+        return {**empty, "error": str(e)}

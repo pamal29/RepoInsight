@@ -2,7 +2,6 @@ import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 from fastapi.middleware.cors import CORSMiddleware
-from github_api.fetcher import g
 
 from github_api.fetcher import get_repo_contents , get_commit_activity
 from utils.file_filter import filter_files
@@ -94,7 +93,13 @@ def analyze_repo(request: AnalyzeRequest):
         commit_activity = get_commit_activity(request.repo_url)
     except Exception as e:
         logger.exception("Failed to fetch commit activity for %s", request.repo_url)
-        commit_activity = {"total_commits": 0, "contributors": {}, "error": str(e)}
+        commit_activity = {
+            "total_commits": 0,
+            "last_30_days": 0,
+            "longest_streak_days": 0,
+            "contributors": {},
+            "error": str(e),
+        }
 
     return {
         "repo_url": request.repo_url,

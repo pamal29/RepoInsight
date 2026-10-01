@@ -1,47 +1,54 @@
-from github import Github
+import io
 import os
+import zipfile
+import requests
+from collections import Counter
+from datetime import datetime, timedelta, timezone
+
 from dotenv import load_dotenv
-from datetime import datetime, timedelta, timezone
-from collections import Counter
 from github import Github, GithubException
-from datetime import datetime, timedelta, timezone
-from collections import Counter
 
 load_dotenv()
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-g = Github(GITHUB_TOKEN)
+g = Github(GITHUB_TOKEN, per_page=100)
+
+SKIP_DIRS = {"node_modules", ".git", "dist", "build", "venv", ".venv",
+             "__pycache__", "vendor", ".next", "target"}
+MAX_FILE_BYTES = 200_000
+MAX_FILES = 500
 
 
 def get_repo_contents(repo_url: str):
-    repo_name = repo_url.removeprefix("https://github.com/")
+    repo_name = repo_url.removeprefix("https://github.com/").rstrip("/")
     repo = g.get_repo(repo_name)
-    contents = repo.get_contents("")
+
+    if repo.size > 100_000:
+        raise ValueError("Repository too large to analyze")
+
+    resp = requests.get(repo.get_archive_link("zipball"), timeout=60)
+    resp.raise_for_status()
 
     all_files = []
-
-    while contents:
-        file_content = contents.pop(0)
-
-        if file_content.type == "dir":
-            contents.extend(repo.get_contents(file_content.path))
-
-        elif file_content.type == "file":
-            try:
-                if file_content.encoding == "base64":
-                    decoded = file_content.decoded_content.decode(
-                        "utf-8", errors="ignore"
-                    )
-                    all_files.append({
-                        "path": file_content.path,
-                        "content": decoded
-                    })
-            except Exception:
+    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
+        for info in zf.infolist():
+            if info.is_dir() or info.file_size > MAX_FILE_BYTES:
                 continue
 
-    return all_files
+            path = info.filename.split("/", 1)[1] if "/" in info.filename else info.filename
+            if not path or any(part in SKIP_DIRS for part in path.split("/")):
+                continue
 
+            raw = zf.read(info)
+            if b"\x00" in raw:
+                continue
+
+            all_files.append({"path": path, "content": raw.decode("utf-8", errors="ignore")})
+            if len(all_files) >= MAX_FILES:
+                break
+
+    return all_files
 
 def get_commit_activity(repo_url: str, max_commits: int = 500):
  

@@ -67,12 +67,9 @@ def root():
 @app.post("/analyze", response_model=AnalyzeResponse)   
 def analyze_repo(request: AnalyzeRequest):
     try:
-        files = get_repo_contents(request.repo_url)
-    except Exception as e:
-        logger.exception("Failed to fetch repo contents for %s", request.repo_url)
-        raise HTTPException(
-            status_code=400, detail=f"Error fetching repository contents: {e}"
-        )
+        files = get_repo_contents(url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     if not files:
         raise HTTPException(status_code=400, detail="No files to analyze")

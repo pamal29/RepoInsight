@@ -1,142 +1,140 @@
-# 🚀 RepoInsight AI
+# RepoInsight
 
-AI-powered GitHub repository intelligence platform.
+**GitHub repository intelligence platform.** Paste any public GitHub repo URL and get an instant breakdown of its tech stack, architecture, complexity, documentation quality, and commit activity.
 
-RepoInsight analyzes any public GitHub repository and provides:
+<!-- Add a screenshot or GIF of the dashboard here -->
+<!-- ![RepoInsight dashboard](docs/dashboard.png) -->
 
-- 📂 Language breakdown
-- 🧱 Framework detection
-- 🏗 Architecture detection
-- 📊 Complexity scoring
-- 🤖 AI-generated technical summary
-- 📈 Visual dashboard with charts
+<!-- Add live demo link once deployed -->
+<!-- **Live demo:** https://your-app.vercel.app -->
 
 ---
 
-## 🏗 Tech Stack
+## Features
 
-### 🖥 Backend
-
-- FastAPI
-- Python
-- OpenAI API
-- GitHub API
-
-### 🌐 Frontend
-
-- React
-- Tailwind CSS
-- Chart.js
-- Axios
+- **Language breakdown**: primary language and distribution across the repo
+- **Framework detection**: identifies frameworks and libraries (Flask, FastAPI, React, Spring, etc.)
+- **Architecture detection**: infers the project's architectural style (MVC, microservices, monolith, etc.)
+- **Complexity scoring**: estimates project complexity from file count and code volume
+- **README health score**: rates documentation quality with a visual score ring
+- **Commit activity**: total commits, commits in the last 30 days, longest streak, and contributor count
+- **Visual dashboard**: clean, component-based React UI with charts and stat cards
 
 ---
 
-## 📦 Features
+## Tech Stack
 
-- Detects programming languages used
-- Identifies frameworks (Flask, React, Spring, etc.)
-- Estimates project complexity
-- Detects architecture style (MVC, Microservices, etc.)
-- Generates AI-powered project summary
-- Displays visual language distribution chart
+| Layer    | Technologies                                   |
+| -------- | ---------------------------------------------- |
+| Backend  | Python, FastAPI, PyGithub, python-dotenv       |
+| Frontend | React, Vite, Tailwind CSS, Chart.js, Axios     |
 
 ---
 
-## ⚙️ Installation & Setup
+## Project Structure
 
-### 1️⃣ Clone Repository
+```
+RepoInsight-AI/
+├── backend/
+│   ├── main.py                 # FastAPI app, POST /analyze
+│   ├── github_api/
+│   │   └── fetcher.py          # GitHub data fetching (repo, contents, commits)
+│   ├── analyzers/              # language, framework, complexity, architecture, README scorer
+│   ├── requirements.txt
+│   └── .env                    # GITHUB_TOKEN (not committed)
+└── frontend/
+    └── src/
+        ├── components/         # SearchBar, OverviewStats, FrameworksSection,
+        │                       # ReadmeHealth, CommitActivity, StatCard, Pill,
+        │                       # SectionHeading, ScoreRing
+        ├── hooks/useAnalyze.js
+        ├── api.js
+        └── App.jsx
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- Node.js 18+
+- A [GitHub personal access token](https://github.com/settings/tokens) (no special scopes needed for public repos)
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/pamal29/RepoInsight-AI.git
 cd RepoInsight-AI
 ```
 
----
-
-## 🖥 Backend Setup
+### 2. Backend setup
 
 ```bash
 cd backend
 python -m venv venv
 ```
 
-### Activate Virtual Environment
-
-**Windows**
+Activate the virtual environment:
 
 ```bash
+# Windows
 venv\Scripts\activate
-```
 
-**Mac/Linux**
-
-```bash
+# macOS / Linux
 source venv/bin/activate
 ```
 
-### Install Dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run Backend
+Create a `.env` file inside `backend/`:
+
+```env
+GITHUB_TOKEN=your_github_token
+```
+
+> A token raises the GitHub API limit from 60 to 5,000 requests per hour.
+
+Run the server:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Backend runs at:
+Backend runs at `http://127.0.0.1:8000` (interactive docs at `/docs`).
 
-```
-http://127.0.0.1:8000
-```
-
----
-
-## 🌐 Frontend Setup
+### 3. Frontend setup
 
 Open a new terminal:
 
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
-Frontend runs at:
-
-```
-http://localhost:3000
-```
+Frontend runs at `http://localhost:5173` (Vite default).
 
 ---
 
-## 🔐 Environment Variables
+## API
 
-Create a `.env` file inside `backend/`:
+### `POST /analyze`
 
-```
-OPENAI_API_KEY=your_openai_api_key
-```
+Analyzes a public GitHub repository.
 
----
-
-## 📊 API Endpoints
-
-### POST `/analyze`
-
-Analyze a GitHub repository.
-
-Example:
+**Request**
 
 ```
 POST /analyze?repo_url=https://github.com/user/repo
 ```
 
----
-
-## 🎯 Example Output
+**Example response**
 
 ```json
 {
@@ -145,23 +143,53 @@ POST /analyze?repo_url=https://github.com/user/repo
     "Python": 60,
     "JavaScript": 40
   },
-  "frameworks": ["Flask", "React"],
+  "frameworks": ["FastAPI", "React"],
   "architecture": "MVC",
   "complexity": {
     "total_files": 120,
     "total_lines": 3500,
     "complexity_score": 87.5
   },
-  "ai_summary": "This repository is a full-stack web application..."
+  "readme_score": {
+    "score": 82,
+    "max": 100
+  },
+  "commit_activity": {
+    "total_commits": 342,
+    "last_30_days": 28,
+    "longest_streak": 9,
+    "contributors": 4
+  }
 }
 ```
 
 ---
 
-## 🚀 Future Improvements
+## Roadmap
 
-- 🔍 Security vulnerability scanning
-- 👥 Contributor analysis
-- ❤️ Repository health score
-- 🌙 Dark mode UI
-- ☁️ Deployment to cloud (Render / Vercel)
+- [ ] Faster file scanning via the Git Trees API
+- [ ] Language distribution chart using `repo.get_languages()`
+- [ ] Commit timeline chart and top contributors
+- [ ] Rate-limit handling and result caching
+- [ ] More analyzers: tests, CI/CD, license, dependency detection
+- [ ] Overall repository health score
+- [ ] Security checks (exposed secrets, missing `.gitignore`)
+- [ ] Contributor analysis
+- [ ] Compare two repositories
+- [ ] Dark mode
+- [ ] Docker setup
+- [ ] Deployment (Render/Railway for backend, Vercel for frontend)
+
+---
+
+## Contributing
+
+Contributions, issues, and feature requests are welcome. Feel free to open an issue or submit a pull request.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for details.
+
+## Author
+
+**Pamal**: [github.com/pamal29](https://github.com/pamal29)
